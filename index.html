@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>יומן תזונה חכם</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#090a0f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="יומן תזונה">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        :root {
+            --bg: #090a0f;
+            --card: #151821;
+            --text: #e0e6ed;
+            --primary: #00f0ff; 
+            --secondary: #ff007c; 
+            --success: #39ff14; 
+            --warning: #ffaa00;
+            --danger: #ff2a2a;
+            --border: #2a2e3d;
+            --input-bg: #0a0c12;
+            --glow-primary: 0 0 10px var(--primary);
+            
+            /* צבעים למדים */
+            --cals-color: #ffb300; 
+            --prot-color: #d35400; 
+            --water-color: #00bfff; 
+        }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 100px; }
+        
+        h2 { text-align: center; margin-bottom: 15px; font-size: 1.6rem; color: var(--primary); text-shadow: var(--glow-primary); letter-spacing: 1px; }
+
+        .card { background: var(--card); border-radius: 10px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        
+        /* סרגל ניווט תאריכים מרוכז */
+        .date-nav-container { background: var(--input-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--border); margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .date-display { font-size: 1.15rem; font-weight: bold; color: #fff; text-align: center; letter-spacing: 0.5px;}
+        .date-buttons { display: flex; gap: 15px; align-items: center; justify-content: center; width: 100%;}
+        .btn-date { background: rgba(0, 240, 255, 0.1); color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; padding: 8px 16px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem;}
+        .btn-date:active { background: var(--primary); color: #000; }
+        .btn-today { background: rgba(255, 170, 0, 0.1); color: var(--warning); border-color: var(--warning); }
+        .btn-today:active { background: var(--warning); color: #000; }
+        
+        .progress-container { background: var(--input-bg); border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .progress-row { display: flex; justify-content: flex-start; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.95rem; font-weight: bold; }
+        .progress-vals { direction: ltr; unicode-bidi: embed; font-weight: normal; color: var(--text); }
+        .progress-bar-bg { background: var(--border); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 15px; }
+        .progress-bar-fill { height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; }
+        
+        .water-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+        .btn-water { background: rgba(0, 191, 255, 0.1); border: 1px solid #00bfff; color: #00bfff; padding: 8px 4px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; text-align: center; }
+        .btn-water-reset { background: rgba(255, 42, 42, 0.1); border: 1px solid var(--danger); color: var(--danger); }
+
+        select, input[type="text"], input[type="number"] { background: var(--input-bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 6px; font-size: 0.95rem; width: 100%; box-sizing: border-box; font-family: inherit; transition: 0.3s; margin-bottom: 10px; }
+        select:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: var(--glow-primary); }
+        select { font-weight: bold; color: var(--primary); min-height: 48px; }
+
+        .btn-main { background: linear-gradient(45deg, #00f0ff, #0088ff); color: #000; border: none; padding: 14px; width: 100%; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: var(--glow-primary); text-transform: uppercase; margin-top: 5px; }
+        .btn-secondary { background: var(--input-bg); border: 1px solid var(--primary); color: var(--primary); padding: 8px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; width: 100%; text-align: center;}
+
+        .nav-tabs { display: flex; justify-content: space-around; background: rgba(21, 24, 33, 0.85); backdrop-filter: blur(10px); position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 0; border-top: 1px solid var(--primary); z-index: 10; box-shadow: 0 -5px 20px rgba(0, 240, 255, 0.15); }
+        .tab { background: none; border: none; color: #8892b0; font-size: 0.9rem; padding: 8px; font-weight: bold; flex: 1; transition: 0.3s; cursor: pointer; }
+        .tab.active { color: var(--primary); text-shadow: var(--glow-primary); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 5px; table-layout: fixed; }
+        th, td { padding: 8px 4px; text-align: center; border-bottom: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th { color: #8892b0; font-weight: normal; font-size: 0.75rem; }
+        td.item-name { text-align: right; font-weight: bold; color: #fff; }
+        th.item-name { text-align: right; }
+        
+        .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+        .btn-delete { background: rgba(255, 42, 42, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+        .btn-edit { background: rgba(0, 240, 255, 0.1); color: var(--primary); border: 1px solid var(--primary); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+
+        .batch-table { width: 100%; font-size: 0.8rem; }
+        .batch-table th, .batch-table td { padding: 6px 3px; }
+
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+        .badge-green { color: var(--success); }
+        .badge-yellow { color: var(--warning); }
+        .badge-red { color: var(--danger); }
+        .badge-gray { color: #8892b0; border: 1px solid var(--border); background: rgba(42, 46, 61, 0.3); }
+
+        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 15px; }
+        .food-card-btn { background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px 5px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; user-select: none; aspect-ratio: 1; }
+        .food-card-btn.selected { border-color: var(--success); background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 12px rgba(57, 255, 20, 0.4); }
+        
+        .food-icon { font-size: 2.5rem; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; height: 55px; width: 55px; }
+        .table-icon { display: inline-block; vertical-align: middle; margin-left: 5px; width: 28px; height: 28px; text-align: center; }
+
+        .food-label { font-size: 0.9rem; font-weight: bold; color: var(--text); line-height: 1.1; text-align: center; z-index: 2;}
+
+        .sort-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .sort-select { padding: 6px; font-size: 0.85rem; border-radius: 6px; min-height: auto; margin: 0; width: auto; flex-grow: 1; max-width: 200px; }
+        
+        .search-bar { position: relative; margin-bottom: 15px; }
+
+        .icon-preview-box { display: flex; align-items: stretch; gap: 12px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .preview-img { width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; background: var(--input-bg); border-radius: 8px; border: 2px dashed var(--primary); cursor: pointer; outline: none; }
+        .preview-img:focus { border-style: solid; box-shadow: 0 0 8px var(--primary); }
+        
+        .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--card); border: 1px solid var(--primary); border-radius: 12px; width: 100%; max-width: 450px; max-height: 80vh; display: flex; flex-direction: column; padding: 15px; box-shadow: 0 0 20px rgba(0, 240, 255, 0.2); }
+        .modal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; overflow-y: auto; padding: 10px 0; flex-grow: 1; }
+        .sticker-option { background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; font-size: 2rem; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; transition: 0.2s; }
+        .sticker-option:hover { border-color: var(--primary); background: rgba(0, 240, 255, 0.1); }
+        
+        /* עיצוב לארוחות ביומן עם גרירה ותקצירי ארוחה */
+        .meal-section { background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s, background 0.2s; }
+        
+        body.is-dragging .meal-section * { pointer-events: none; } /* מונע היבהוב בגרירה */
+        
+        .meal-section.dragging { opacity: 0.5; transform: scale(0.98); box-shadow: 0 0 15px rgba(0,240,255,0.3); z-index: 50; }
+        .meal-section.drag-over { border: 2px dashed var(--primary); background: rgba(0,240,255,0.08); transform: scale(1.02); }
+        .meal-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .meal-title { margin: 0; color: var(--primary); font-size: 1.05rem; }
+        .meal-summary { font-size: 0.8rem; color: #8892b0; margin-top: 4px; font-weight: bold; }
+        .meal-actions { display: flex; gap: 8px; align-items: center; }
+        .grip-handle { cursor: grab; font-size: 1.5rem; color: #5a6582; margin-left: 10px; touch-action: none; display: flex; align-items: center;}
+        .grip-handle:active { cursor: grabbing; color: var(--primary); }
+        .btn-icon-action { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; transition: 0.2s;}
+        .btn-icon-action:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+        .btn-delete-meal { color: var(--danger); border-color: rgba(255, 42, 42, 0.3); }
+        .btn-delete-meal:hover { background: rgba(255, 42, 42, 0.1); border-color: var(--danger); }
+        .meal-body { margin-top: 15px; transition: 0.3s; overflow: hidden; }
+    </style>
+</head>
+<body>
+
+    <h2 id="main-title">יומן תזונה חכם</h2>
+    <div id="content-container"></div>
+
+    <div class="nav-tabs">
+        <button class="tab active" onclick="loadLogTab(this)">יומן אכילה</button>
+        <button class="tab" onclick="startBatchAdd(this)">הוספת ארוחה</button>
+        <button class="tab" onclick="loadFoodListTab(this)">מאגר</button>
+        <button class="tab" onclick="loadAddFoodTab(this)">צור מאכל</button>
+    </div>
+
+    <script>
+        const defaultFoods = [
+            { name: 'חזה עוף מבושל', icon: '🍗', scale: 1, cals: 206, protein: 38.8, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'חזה עוף צלוי / על האש', icon: '🔥', scale: 1, cals: 206, protein: 38.8, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'חזה עוף מטוגן', icon: '🍳', scale: 1, cals: 234, protein: 41.8, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'שניצל (עוף מטוגן)', icon: '🥩', scale: 1, cals: 293, protein: 31.3, unitName: 'יחידה', unitWeight: 125, isProduce: false },
+            { name: 'בשר בקר טחון מבושל', icon: '🥘', scale: 1, cals: 305, protein: 30.8, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'דג אמנון (מושט) אפוי', icon: '🐟', scale: 1, cals: 160, protein: 32.6, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'טונה במים', icon: '🐟', scale: 1, cals: 110, protein: 25.3, unitName: 'קופסה', unitWeight: 110, isProduce: false },
+            { name: 'אורז לבן מבושל', icon: '🍚', scale: 1, cals: 163, protein: 3.4, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'בורגול מבושל', icon: '🥗', scale: 1, cals: 104, protein: 3.9, unitName: 'מנה', unitWeight: 125, isProduce: false },
+            { name: 'ביצה קשה (L)', icon: '🥚', scale: 1, cals: 72, protein: 6.3, unitName: 'יחידה', unitWeight: 60, isProduce: false },
+            { name: 'חביתה מטוגנת', icon: '🍳', scale: 1, cals: 115, protein: 6.3, unitName: 'יחידה', unitWeight: 60, isProduce: false },
+            { name: 'קוטג\' 5%', icon: '🧀', scale: 1, cals: 235, protein: 26.3, unitName: 'גביע', unitWeight: 250, isProduce: false },
+            { name: 'קוטג\' 3%', icon: '🧀', scale: 1, cals: 212, protein: 27.5, unitName: 'גביע', unitWeight: 250, isProduce: false },
+            { name: 'גבינה לבנה 5%', icon: '🥣', scale: 1, cals: 250, protein: 22.5, unitName: 'גביע', unitWeight: 250, isProduce: false },
+            { name: 'יוגורט פרו 20', icon: '🥛', scale: 1, cals: 104, protein: 20.0, unitName: 'גביע', unitWeight: 200, isProduce: false },
+            { name: 'חלב 3%', icon: '🥛', scale: 1, cals: 120, protein: 6.6, unitName: 'כוס', unitWeight: 200, isProduce: false },
+            { name: 'לחם מלא (רגיל)', icon: '🍞', scale: 1, cals: 84, protein: 3.1, unitName: 'פרוסה', unitWeight: 35, isProduce: false },
+            { name: 'לחם כוסמין מלא (אנג\'ל)', icon: '🍞', scale: 1, cals: 85, protein: 4.3, unitName: 'פרוסה', unitWeight: 35, isProduce: false },
+            { name: 'דבש', icon: '🍯', scale: 1, cals: 21, protein: 0, unitName: 'כפית', unitWeight: 7, isProduce: false },
+            { name: 'סילאן טבעי', icon: '🍯', scale: 1, cals: 54, protein: 0, unitName: 'כף', unitWeight: 20, isProduce: false },
+            { name: 'תפוח אדמה מבושל/אפוי', icon: '🥔', scale: 1, cals: 131, protein: 2.9, unitName: 'יחידה (בינונית)', unitWeight: 150, isProduce: true },
+            { name: 'בטטה מבושלת/אפויה', icon: '🍠', scale: 1, cals: 114, protein: 2.1, unitName: 'יחידה (בינונית)', unitWeight: 150, isProduce: true },
+            { name: 'גזר', icon: '🥕', scale: 1, cals: 41, protein: 0.9, unitName: 'יחידה (בינונית)', unitWeight: 100, isProduce: true },
+            { name: 'עגבניה', icon: '🍅', scale: 1, cals: 23, protein: 1.2, unitName: 'יחידה (בינונית)', unitWeight: 130, isProduce: true },
+            { name: 'בננה', icon: '🍌', scale: 1, cals: 89, protein: 1.1, unitName: 'יחידה (בינונית)', unitWeight: 100, isProduce: true },
+            { name: 'תפוח', icon: '🍎', scale: 1, cals: 78, protein: 0.4, unitName: 'יחידה (בינונית)', unitWeight: 150, isProduce: true }
+        ];
+
+        let selectedFoodIndices = []; 
+        let editIndex = null; 
+        let currentCustomIcon = ''; 
+        let currentScale = 1; 
+        
+        let draggedBlockId = null;
+
+        let currentViewDate = new Date();
+        currentViewDate.setHours(0, 0, 0, 0); 
+        
+        let collapsedBlocks = JSON.parse(localStorage.getItem('nutrition_ui_collapsed') || '{}');
+
+        const foodStickerBank = [
+            '🍗', '🥩', '🍖', '🥓', '🍔', '🌭', '🥪', '🥙', '🌮', '🌯', '🥗', '🍲', '🍛', '🍜',
+            '🍚', '🍙', '🍘', '🍥', '🍡', '🍢', '🍣', '🍤', '🥮', '🍳', '🥚', '🧀', '🍞', '🥖',
+            '🥨', '🥞', '🧇', '🥔', '🍠', '🥕', '🌽', '🥦', '🥒', '🥬', '🥑', '🍆', '🍅', '🍏', 
+            '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🍍', '🥥', '🥝', 
+            '🥛', '🍼', '🍯', '🥜'
+        ];
+
+        function getFoodDB() {
+            let custom = JSON.parse(localStorage.getItem('customFoodDB_v9') || 'null');
+            if (!custom) {
+                localStorage.setItem('customFoodDB_v9', JSON.stringify(defaultFoods));
+                return defaultFoods;
+            }
+            return custom;
+        }
+
+        function getDateData(dateObj) {
+            let dateStr = dateObj.toLocaleDateString('he-IL');
+            let data = JSON.parse(localStorage.getItem('nutritionData_v8') || '{}');
+            let needsSave = false;
+
+            if (!data[dateStr]) {
+                data[dateStr] = { items: [], water: 0, blockOrder: ['meal_בוקר', 'meal_צהריים', 'meal_ערב', 'meal_ביניים'] };
+                needsSave = true;
+            }
+            if (!data[dateStr].blockOrder) {
+                data[dateStr].blockOrder = ['meal_בוקר', 'meal_צהריים', 'meal_ערב', 'meal_ביניים'];
+                needsSave = true;
+            }
+
+            if(data[dateStr].items) {
+                data[dateStr].items.forEach((item, idx) => {
+                    if (!item.meal) { item.meal = 'ביניים'; needsSave = true; }
+                    if (item.meal === 'ללא שיוך' && !item.id) {
+                        item.id = Date.now().toString() + Math.floor(Math.random()*1000) + idx;
+                        needsSave = true;
+                    }
+                });
+            } else {
+                data[dateStr].items = [];
+            }
+
+            let validBlockIds = new Set(data[dateStr].items.map(item =>
+                item.meal === 'ללא שיוך' ? 'single_' + item.id : 'meal_' + (item.meal || 'ביניים')
+            ));
+            let cleanedOrder = data[dateStr].blockOrder.filter(id => validBlockIds.has(id));
+            validBlockIds.forEach(id => {
+                if (!cleanedOrder.includes(id)) cleanedOrder.push(id);
+            });
+            if (cleanedOrder.length !== data[dateStr].blockOrder.length ||
+                cleanedOrder.some((id, i) => id !== data[dateStr].blockOrder[i])) {
+                data[dateStr].blockOrder = cleanedOrder;
+                needsSave = true;
+            }
+
+            if(needsSave) localStorage.setItem('nutritionData_v8', JSON.stringify(data));
+
+            return { dateStr, data, dayData: data[dateStr] };
+        }
+
+        function changeDate(delta) {
+            currentViewDate.setDate(currentViewDate.getDate() + delta);
+            loadLogTab(document.querySelector('.tab.active') || document.querySelectorAll('.tab')[0]);
+        }
+
+        function goToToday() {
+            currentViewDate = new Date();
+            currentViewDate.setHours(0, 0, 0, 0);
+            loadLogTab(document.querySelector('.tab.active') || document.querySelectorAll('.tab')[0]);
+        }
+
+        function renderIcon(iconData, scale = 1, isTable = false) {
+            let s = scale || 1;
+            if (!iconData) return isTable ? '<span class="table-icon" style="font-size:1.1rem;">🍽️</span>' : '<span style="font-size:2.5rem;">🍽️</span>';
+            
+            if (iconData.startsWith('data:image')) {
+                let size = isTable ? 28 : 55;
+                return `<span class="table-icon" style="display:inline-flex; align-items:center; justify-content:center; width:${size}px; height:${size}px;">
+                            <img src="${iconData}" style="width:100%; height:100%; object-fit:contain; transform: scale(${s});" alt="icon">
+                        </span>`; 
+            }
+            
+            let fontSize = isTable ? (1.1 * s) + 'rem' : (2.5 * s) + 'rem';
+            return isTable ? `<span class="table-icon" style="font-size:${fontSize}; line-height:1;">${iconData}</span>` : `<span style="font-size:${fontSize}; line-height:1;">${iconData}</span>`;
+        }
+
+        function getProteinDensityDisplay(cals, protein, isProduce) {
+            if (isProduce) return `<span class="badge badge-gray">פרי / ירק</span>`;
+            if (protein <= 0) return `<span class="badge">לא רלוונטי</span>`;
+            
+            let ratio = Math.round(cals / protein);
+            let ratioStr = `10:${ratio * 10}`; 
+            let calcRatio = (cals / protein) * 10;
+            
+            if (calcRatio <= 110) return `<span class="badge badge-green">מעולה (${ratioStr})</span>`;
+            if (calcRatio <= 150) return `<span class="badge badge-yellow">בינוני (${ratioStr})</span>`;
+            return `<span class="badge badge-red">נמוך (${ratioStr})</span>`;
+        }
+
+        function loadLogTab(tabElement) {
+            updateNav(tabElement, 'יומן אכילה');
+            let container = document.getElementById('content-container');
+            
+            let { dateStr, data, dayData } = getDateData(currentViewDate);
+
+            let todayObj = new Date();
+            todayObj.setHours(0, 0, 0, 0);
+            let isToday = currentViewDate.getTime() === todayObj.getTime();
+            let displayTitle = isToday ? `היום (${dateStr})` : `תאריך: ${dateStr}`;
+
+            let totalCals = 0, totalProt = 0;
+            dayData.items.forEach(item => {
+                totalCals += item.cals;
+                totalProt += item.protein;
+            });
+
+            let protCheck = totalProt >= 140 ? '<span style="color:var(--success); text-shadow:0 0 10px var(--success); margin-right:5px; font-size:1.1rem;">✅</span>' : '';
+            let waterCheck = dayData.water >= 3000 ? '<span style="color:var(--success); text-shadow:0 0 10px var(--success); margin-right:5px; font-size:1.1rem;">✅</span>' : '';
+            
+            let calColor = totalCals > 2300 ? 'var(--danger)' : 'var(--cals-color)';
+
+            container.innerHTML = `
+                <div class="date-nav-container">
+                    <div class="date-display">${displayTitle}</div>
+                    <div class="date-buttons">
+                        <button class="btn-date" onclick="changeDate(-1)">► אתמול</button>
+                        ${!isToday ? `<button class="btn-date btn-today" onclick="goToToday()">חזור להיום</button>` : ''}
+                        <button class="btn-date" onclick="changeDate(1)">מחר ◄</button>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-row">
+                        <span>🔥 קלוריות:</span> 
+                        <span class="progress-vals" style="color: ${calColor}; font-weight:bold;">${Math.round(totalCals)} / 2300 קק"ל</span>
+                    </div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${Math.min((totalCals/2300)*100, 100)}%; background-color: ${calColor};"></div></div>
+                    
+                    <div class="progress-row">
+                        <span>🥩 חלבון:</span> 
+                        <span class="progress-vals" style="color: var(--prot-color); font-weight:bold;">${Math.round(totalProt)} / 140 גרם</span>
+                        ${protCheck}
+                    </div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${Math.min((totalProt/140)*100, 100)}%; background-color: var(--prot-color);"></div></div>
+
+                    <div class="progress-row" style="margin-top:15px;">
+                        <span>💧 מים:</span> 
+                        <span class="progress-vals" style="color: var(--water-color); font-weight:bold;">${dayData.water} / 3000 מ"ל</span>
+                        ${waterCheck}
+                    </div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${Math.min((dayData.water/3000)*100, 100)}%; background-color: var(--water-color);"></div></div>
+                    <div class="water-controls">
+                        <button class="btn-water" onclick="addWater(670)">+בקבוק 670</button>
+                        <button class="btn-water" onclick="addWater(300)">+כוס 300</button>
+                        <button class="btn-water" onclick="addWater(200)">+כוס 200</button>
+                        <button class="btn-water btn-water-reset" onclick="addWater(-99999)">איפוס</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                        <h3 style="margin:0; font-size:1.1rem; color:var(--primary);">פירוט ביומן</h3>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-secondary" style="padding:4px 8px; margin:0;" onclick="toggleAllSections(false)">הרחב הכל</button>
+                            <button class="btn-secondary" style="padding:4px 8px; margin:0;" onclick="toggleAllSections(true)">כווץ הכל</button>
+                        </div>
+                    </div>
+                    <div id="today-items-table">
+                        ${renderMealsLayout(dayData)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleSection(blockId) {
+            let body = document.getElementById('body_' + blockId);
+            let btn = document.getElementById('btn_toggle_' + blockId);
+            if (!body) return;
+            
+            if (body.style.display === 'none') {
+                body.style.display = 'block';
+                btn.innerText = '▼';
+                collapsedBlocks[blockId] = false;
+            } else {
+                body.style.display = 'none';
+                btn.innerText = '◀';
+                collapsedBlocks[blockId] = true;
+            }
+            
+            localStorage.setItem('nutrition_ui_collapsed', JSON.stringify(collapsedBlocks));
+        }
+
+        function toggleAllSections(collapse) {
+            let bodies = document.querySelectorAll('.meal-body');
+            let btns = document.querySelectorAll('.btn-toggle');
+            
+            bodies.forEach(b => b.style.display = collapse ? 'none' : 'block');
+            btns.forEach(b => b.innerText = collapse ? '◀' : '▼');
+            
+            btns.forEach(b => {
+                let blockId = b.id.replace('btn_toggle_', '');
+                collapsedBlocks[blockId] = collapse;
+            });
+            
+            localStorage.setItem('nutrition_ui_collapsed', JSON.stringify(collapsedBlocks));
+        }
+
+        function deleteMealBlock(blockId, title) {
+            if(!confirm(`האם אתה בטוח שברצונך למחוק לחלוטין את "${title}"? (כל המאכלים בפנים יימחקו)`)) return;
+            
+            let { dateStr, data, dayData } = getDateData(currentViewDate);
+            
+            dayData.items = dayData.items.filter(item => {
+                let currentBId = (item.meal === 'ללא שיוך') ? 'single_' + item.id : 'meal_' + (item.meal || 'ביניים');
+                return currentBId !== blockId;
+            });
+            
+            dayData.blockOrder = dayData.blockOrder.filter(id => id !== blockId);
+            
+            localStorage.setItem('nutritionData_v8', JSON.stringify(data));
+            loadLogTab(document.querySelectorAll('.tab')[0]);
+        }
+
+        function dragStart(e, id) {
+            const section = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest('.meal-section') : null;
+            draggedBlockId = id;
+            if (section) {
+                section.classList.add('dragging');
+            }
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', id);
+            }
+            document.body.classList.add('is-dragging');
+        }
+
+        function dragEnd(e) {
+            const section = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest('.meal-section') : null;
+            if (section) {
+                section.classList.remove('dragging');
+            }
+            document.body.classList.remove('is-dragging');
+            document.querySelectorAll('.meal-section').forEach(el => el.classList.remove('drag-over'));
+            draggedBlockId = null;
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+            if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = 'move';
+            }
+            return false;
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            const section = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest('.meal-section') : null;
+            if (section) {
+                section.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(e) {
+            const section = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest('.meal-section') : null;
+            if (section) {
+                section.classList.remove('drag-over');
+            }
+        }
+
+        function drop(e, targetId) {
+            e.preventDefault();
+            e.stopPropagation();
+            const section = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest('.meal-section') : null;
+            if (section) {
+                section.classList.remove('drag-over');
+            }
+
+            if (!draggedBlockId || draggedBlockId === targetId) {
+                draggedBlockId = null;
+                return false;
+            }
+
+            let { data, dayData } = getDateData(currentViewDate);
+            let arr = dayData.blockOrder;
+            let fromIdx = arr.indexOf(draggedBlockId);
+            let toIdx = arr.indexOf(targetId);
+
+            if (fromIdx > -1 && toIdx > -1) {
+                [arr[fromIdx], arr[toIdx]] = [arr[toIdx], arr[fromIdx]];
+                localStorage.setItem('nutritionData_v8', JSON.stringify(data));
+                loadLogTab(document.querySelectorAll('.tab')[0]);
+            }
+
+            draggedBlockId = null;
+            return false;
+        }
+
+        function renderMealsLayout(dayData) {
+            if (dayData.items.length === 0) return '<div style="text-align:center; color:#8892b0; padding:15px;">לא הוזנו מאכלים. עבור ללשונית "הוספת ארוחה".</div>';
+            
+            let colGroupHtml = `
+                <colgroup>
+                    <col style="width: 40%;">
+                    <col style="width: 25%;">
+                    <col style="width: 12.5%;">
+                    <col style="width: 12.5%;">
+                    <col style="width: 10%;">
+                </colgroup>
+            `;
+            
+            let blocksMap = {};
+            
+            dayData.items.forEach((item, idx) => {
+                let bId;
+                if (item.meal === 'ללא שיוך') {
+                    bId = 'single_' + item.id;
+                } else {
+                    bId = 'meal_' + (item.meal || 'ביניים');
+                }
+
+                if (!blocksMap[bId]) {
+                    let title = '';
+                    if (bId.startsWith('single_')) title = '✨ ' + item.name;
+                    else if (bId === 'meal_ביניים') title = '🥨 ביניים';
+                    else if (bId === 'meal_בוקר') title = '🍳 ארוחת בוקר';
+                    else if (bId === 'meal_צהריים') title = '🍲 ארוחת צהריים';
+                    else if (bId === 'meal_ערב') title = '🥗 ארוחת ערב';
+                    
+                    blocksMap[bId] = { id: bId, title: title, items: [], totalCals: 0, totalProt: 0 };
+                }
+                
+                blocksMap[bId].items.push({ ...item, originalIndex: idx });
+                blocksMap[bId].totalCals += item.cals;
+                blocksMap[bId].totalProt += item.protein;
+            });
+
+            Object.keys(blocksMap).forEach(bId => {
+                if (!dayData.blockOrder.includes(bId)) {
+                    dayData.blockOrder.push(bId);
+                }
+            });
+
+            let html = '';
+            let displayBlocks = dayData.blockOrder.filter(bId => blocksMap[bId]).map(bId => blocksMap[bId]);
+
+            displayBlocks.forEach((block) => {
+                let rows = block.items.map(x => `
+                    <tr>
+                        <td class="item-name" style="text-align:right;">${renderIcon(x.icon, x.scale, true)} ${x.name}</td>
+                        <td>${x.amount}</td>
+                        <td>${Math.round(x.cals)}</td>
+                        <td>${Math.round(x.protein)}</td>
+                        <td><button class="btn-delete" onclick="removeItem(${x.originalIndex})" style="padding:2px 6px;">מחק</button></td>
+                    </tr>
+                `).join('');
+
+                let cleanTitleForDelete = block.title.replace(/['"]/g, '');
+                
+                let isCollapsed = collapsedBlocks[block.id] === true;
+                let bodyStyle = isCollapsed ? 'display: none;' : 'display: block;';
+                let btnIcon = isCollapsed ? '◀' : '▼';
+
+                html += `
+                    <div class="meal-section" data-block-id="${block.id}" draggable="true" ondragstart="dragStart(event, '${block.id}')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, '${block.id}')">
+                        <div class="meal-header" onclick="toggleSection('${block.id}')">
+                            <div style="display:flex; align-items:center;">
+                                <div class="grip-handle" title="לחץ והחזק כדי לגרור">☰</div>
+                                <div style="margin-right:8px;">
+                                    <h4 class="meal-title">${block.title}</h4>
+                                    <div class="meal-summary">🔥 ${Math.round(block.totalCals)} קק"ל | 🥩 ${Math.round(block.totalProt)} גרם חלבון</div>
+                                </div>
+                            </div>
+                            <div class="meal-actions" onclick="event.stopPropagation()">
+                                <button class="btn-icon-action btn-delete-meal" onclick="deleteMealBlock('${block.id}', '${cleanTitleForDelete}')" title="מחק ארוחה">🗑️</button>
+                                <button class="btn-icon-action btn-toggle" id="btn_toggle_${block.id}" onclick="toggleSection('${block.id}')">${btnIcon}</button>
+                            </div>
+                        </div>
+                        <div class="meal-body" id="body_${block.id}" style="${bodyStyle}">
+                            <table>
+                                ${colGroupHtml}
+                                <thead><tr><th class="item-name" style="text-align:right;">מאכל</th><th>כמות</th><th>קלוריות</th><th>חלבון</th><th>פעולה</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        function startBatchAdd(tabElement) {
+            let dateTitle = (currentViewDate.getTime() === new Date().setHours(0,0,0,0)) ? 'שלב א׳: בחירת מאכלים' : `הוספת ארוחה ל-${currentViewDate.toLocaleDateString('he-IL')}`;
+            updateNav(tabElement, dateTitle);
+            selectedFoodIndices = [];
+            let container = document.getElementById('content-container');
+            let foodDB = getFoodDB();
+
+            let cardsHtml = foodDB.map((f, i) => `
+                <div class="food-card-btn" id="fc_${i}" data-name="${f.name}" onclick="toggleFoodCard(${i})">
+                    <div class="food-icon">${renderIcon(f.icon, f.scale)}</div>
+                    <div class="food-label">${f.name}</div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="card">
+                    <div class="search-bar">
+                        <input type="text" id="add_search" placeholder="🔍 חפש מאכל..." oninput="filterAddCards()">
+                    </div>
+                    <p style="font-size:0.9rem; color:#8892b0; margin-top:0; text-align:center;">
+                        הקלק על כל המאכלים שאכלת בארוחה זו
+                        <br>
+                        <span style="font-size:0.75rem;">(מוצגים <strong style="color:var(--primary);" id="add_meal_count">${foodDB.length}</strong> מאכלים)</span>
+                    </p>
+                    <div class="food-grid" id="food_grid_container">
+                        ${cardsHtml}
+                    </div>
+                    <button class="btn-main" onclick="goToBatchStep2()" style="margin-top:20px;">המשך לשלב הבא</button>
+                </div>
+            `;
+        }
+
+        function filterAddCards() {
+            let term = document.getElementById('add_search').value.toLowerCase();
+            let cards = document.querySelectorAll('.food-card-btn');
+            let visibleCount = 0;
+            cards.forEach(card => {
+                let name = card.getAttribute('data-name').toLowerCase();
+                if (name.includes(term)) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            let countLabel = document.getElementById('add_meal_count');
+            if (countLabel) countLabel.innerText = visibleCount;
+        }
+
+        function toggleFoodCard(index) {
+            let card = document.getElementById(`fc_${index}`);
+            let pos = selectedFoodIndices.indexOf(index);
+            if (pos === -1) {
+                selectedFoodIndices.push(index);
+                card.classList.add('selected');
+            } else {
+                selectedFoodIndices.splice(pos, 1);
+                card.classList.remove('selected');
+            }
+        }
+
+        function goToBatchStep2() {
+            if (selectedFoodIndices.length === 0) {
+                alert('אנא בחר לפחות מאכל אחד כדי להמשיך.');
+                return;
+            }
+
+            document.getElementById('main-title').innerText = 'שלב ב׳: כמויות ושיוך';
+            let container = document.getElementById('content-container');
+            let foodDB = getFoodDB();
+
+            let rows = selectedFoodIndices.map(i => {
+                let f = foodDB[i];
+                return `
+                <tr>
+                    <td class="item-name" style="text-align:right;">${renderIcon(f.icon, f.scale, true)} ${f.name}</td>
+                    <td><input type="number" id="amt_${i}" value="1" step="0.25" style="padding:6px; font-size:0.8rem; text-align:center;"></td>
+                    <td>
+                        <select id="unit_${i}" style="padding:6px; font-size:0.8rem; min-height:auto;">
+                            <option value="unit">${f.unitName} (${f.unitWeight}ג)</option>
+                            <option value="grams">גרם</option>
+                        </select>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="card">
+                    <button class="btn-secondary" onclick="startBatchAdd(null)">חזור ללוח המאכלים</button>
+                    
+                    <div style="margin: 20px 0; background:rgba(0, 240, 255, 0.05); border:1px solid var(--primary); padding:15px; border-radius:8px;">
+                        <label style="font-size:0.95rem; color:#fff; font-weight:bold; margin-bottom:10px; display:block; text-align:center;">לאיזו ארוחה ביומן לשייך את המאכלים?</label>
+                        <select id="meal_category_select" style="font-size:1rem; padding:10px;">
+                            <option value="בוקר">🍳 ארוחת בוקר</option>
+                            <option value="צהריים">🍲 ארוחת צהריים</option>
+                            <option value="ערב">🥗 ארוחת ערב</option>
+                            <option value="ביניים">🥨 ביניים</option>
+                            <option value="ללא שיוך" selected>✨ ללא שיוך (עומד בפני עצמו)</option>
+                        </select>
+                    </div>
+
+                    <p style="font-size:0.85rem; color:#8892b0; margin-top:10px;">הגדר כמויות למאכלים שבחרת (אפשר גם חצאים כמו 0.5):</p>
+                    <table class="batch-table">
+                        <colgroup>
+                            <col style="width: 36%;">
+                            <col style="width: 26%;">
+                            <col style="width: 38%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th class="item-name" style="text-align:right;">מאכל</th>
+                                <th>כמות</th>
+                                <th>סוג מידה</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <button class="btn-main" onclick="saveBatchSelection()" style="margin-top:15px;">סיום והוספה ליומן</button>
+                </div>
+            `;
+        }
+
+        function saveBatchSelection() {
+            let foodDB = getFoodDB();
+            let { dateStr, data, dayData } = getDateData(currentViewDate);
+            let selectedMeal = document.getElementById('meal_category_select').value;
+
+            selectedFoodIndices.forEach((i, loopIndex) => {
+                let f = foodDB[i];
+                let amount = parseFloat(document.getElementById(`amt_${i}`).value) || 1;
+                let selectedType = document.getElementById(`unit_${i}`).value;
+                
+                let multiplier = 1;
+                let displayAmount = '';
+
+                if (selectedType === 'unit') {
+                    multiplier = amount;
+                    displayAmount = `${amount} ${f.unitName.includes('(') ? f.unitName.split(' ')[0] : f.unitName} (${Math.round(amount * f.unitWeight)}ג)`;
+                } else if (selectedType === 'grams') {
+                    multiplier = amount / f.unitWeight;
+                    displayAmount = `${amount} גרם`;
+                }
+
+                dayData.items.push({
+                    id: Date.now().toString() + Math.floor(Math.random()*1000) + loopIndex, 
+                    name: f.name,
+                    icon: f.icon, 
+                    scale: f.scale || 1,
+                    meal: selectedMeal, 
+                    amount: displayAmount,
+                    cals: f.cals * multiplier,
+                    protein: f.protein * multiplier
+                });
+            });
+
+            localStorage.setItem('nutritionData_v8', JSON.stringify(data));
+            loadLogTab(document.querySelectorAll('.tab')[0]); 
+        }
+
+        function removeItem(index) {
+            let { dateStr, data, dayData } = getDateData(currentViewDate);
+            dayData.items.splice(index, 1);
+            localStorage.setItem('nutritionData_v8', JSON.stringify(data));
+            loadLogTab(document.querySelectorAll('.tab')[0]);
+        }
+
+        function addWater(amount) {
+            let { dateStr, data, dayData } = getDateData(currentViewDate);
+            if (amount === -99999) {
+                dayData.water = 0;
+            } else {
+                dayData.water = Math.max(0, dayData.water + amount);
+            }
+            localStorage.setItem('nutritionData_v8', JSON.stringify(data));
+            loadLogTab(document.querySelectorAll('.tab')[0]);
+        }
+
+        function loadFoodListTab(tabElement) {
+            updateNav(tabElement, 'מאגר מאכלים');
+            renderFoodDBTable('default');
+        }
+
+        function renderFoodDBTable(sortMode = 'default') {
+            let container = document.getElementById('content-container');
+            let foodDB = getFoodDB();
+            
+            let currentSearchTerm = '';
+            let searchInput = document.getElementById('db_search');
+            if (searchInput) currentSearchTerm = searchInput.value.toLowerCase();
+            
+            let sortedDB = foodDB.map((f, idx) => ({...f, originalIndex: idx}));
+
+            if (currentSearchTerm) {
+                sortedDB = sortedDB.filter(f => f.name.toLowerCase().includes(currentSearchTerm));
+            }
+
+            if (sortMode === 'protein_desc') {
+                sortedDB.sort((a, b) => b.protein - a.protein);
+            } else if (sortMode === 'cals_desc') {
+                sortedDB.sort((a, b) => b.cals - a.cals);
+            } else if (sortMode === 'density') {
+                sortedDB.sort((a, b) => {
+                    if (a.isProduce && !b.isProduce) return 1;
+                    if (!a.isProduce && b.isProduce) return -1;
+                    
+                    let ratioA = a.protein > 0 ? a.cals / a.protein : 9999;
+                    let ratioB = b.protein > 0 ? b.cals / b.protein : 9999;
+                    return ratioA - ratioB; 
+                });
+            }
+
+            let colGroupHtml = `
+                <colgroup>
+                    <col style="width: 30%;">
+                    <col style="width: 20%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                </colgroup>
+            `;
+
+            let rows = sortedDB.map(f => {
+                let displayUnitName = f.unitName.includes('(') ? f.unitName.split(' ')[0] : f.unitName;
+                return `
+                <tr>
+                    <td class="item-name">${renderIcon(f.icon, f.scale, true)} ${f.name}</td>
+                    <td style="line-height:1.2; font-size:0.75rem;">1 ${displayUnitName}<br><span style="font-size:0.65rem; color:#8892b0;">(${f.unitWeight}ג)</span></td>
+                    <td>${f.cals}</td>
+                    <td>${f.protein}</td>
+                    <td>${getProteinDensityDisplay(f.cals, f.protein, f.isProduce)}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-edit" onclick="editFoodItem(${f.originalIndex})">ערוך</button>
+                            <button class="btn-delete" onclick="deleteFoodItem(${f.originalIndex})">מחק</button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="card">
+                    <div class="search-bar">
+                        <input type="text" id="db_search" placeholder="🔍 חפש במאגר..." value="${currentSearchTerm}" oninput="renderFoodDBTable(document.getElementById('sort_select').value)">
+                    </div>
+                    
+                    <div class="sort-header" style="align-items: center;">
+                        <span style="font-size:0.9rem; color:#8892b0; font-weight:bold;">סה"כ במאגר: <span style="color:var(--primary);">${sortedDB.length}</span></span>
+                        <select id="sort_select" class="sort-select" onchange="renderFoodDBTable(this.value)">
+                            <option value="default" ${sortMode === 'default' ? 'selected' : ''}>מיין לפי: ברירת מחדל</option>
+                            <option value="protein_desc" ${sortMode === 'protein_desc' ? 'selected' : ''}>חלבון (גבוה לנמוך)</option>
+                            <option value="cals_desc" ${sortMode === 'cals_desc' ? 'selected' : ''}>קלוריות (גבוה לנמוך)</option>
+                            <option value="density" ${sortMode === 'density' ? 'selected' : ''}>צפיפות חלבון (מעולה לגרוע)</option>
+                        </select>
+                    </div>
+                    <table style="display:block; overflow-x:auto; table-layout:fixed; width:100%;">
+                        ${colGroupHtml}
+                        <thead><tr><th class="item-name" style="text-align:right;">מאכל</th><th>יחידה</th><th>קלוריות</th><th>חלבון</th><th>צפיפות</th><th>פעולות</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+            
+            let newSearchInput = document.getElementById('db_search');
+            if (newSearchInput && currentSearchTerm) {
+                newSearchInput.focus();
+            }
+        }
+
+        function deleteFoodItem(index) {
+            if (confirm("למחוק מאכל זה מהמאגר?")) {
+                let foodDB = getFoodDB();
+                foodDB.splice(index, 1);
+                localStorage.setItem('customFoodDB_v9', JSON.stringify(foodDB));
+                renderFoodDBTable(document.getElementById('sort_select').value);
+            }
+        }
+
+        function editFoodItem(index) {
+            editIndex = index;
+            let foodDB = getFoodDB();
+            let f = foodDB[index];
+            currentCustomIcon = f.icon; 
+            currentScale = f.scale || 1;
+            
+            loadAddFoodTab(document.querySelectorAll('.tab')[3], true);
+            
+            document.getElementById('new_name').value = f.name;
+            document.getElementById('new_cals').value = f.cals;
+            document.getElementById('new_prot').value = f.protein;
+            
+            let unitSelect = document.getElementById('new_unit_name');
+            let found = false;
+            for(let i=0; i<unitSelect.options.length; i++){
+                if(unitSelect.options[i].value === f.unitName) found = true;
+            }
+            if(!found) {
+                let opt = document.createElement('option');
+                opt.value = f.unitName;
+                opt.innerHTML = f.unitName;
+                unitSelect.appendChild(opt);
+            }
+            unitSelect.value = f.unitName;
+
+            document.getElementById('new_unit_weight').value = f.unitWeight;
+            document.getElementById('new_is_produce').checked = f.isProduce || false;
+            document.getElementById('icon_scale_range').value = currentScale;
+            document.getElementById('scale_val_lbl').innerText = Math.round(currentScale * 100) + '%';
+            
+            updatePreviewIcon();
+        }
+
+        function loadAddFoodTab(tabElement, isEdit = false) {
+            updateNav(tabElement, isEdit ? 'עריכת מאכל' : 'יצירת מאכל חדש');
+            let container = document.getElementById('content-container');
+
+            if (!isEdit) {
+                editIndex = null;
+                currentCustomIcon = '🍽️'; 
+                currentScale = 1;
+            }
+
+            container.innerHTML = `
+                <div class="card">
+                    <label style="font-size:0.8rem; color:#8892b0;">שם המאכל</label>
+                    <input type="text" id="new_name" placeholder="למשל: סלט קינואה">
+                    
+                    <label style="font-size:0.8rem; color:#8892b0; margin-bottom:5px; display:block;">תמונה / סטיקר / אימוג'י (לחץ להדבקה Ctrl+V)</label>
+                    <div class="icon-preview-box">
+                        <div class="preview-img" id="icon_preview" tabindex="0" title="לחץ כאן והדבק תמונה (Ctrl+V)" onpaste="handlePaste(event)">🍽️</div>
+                        <div style="flex-grow:1; display:flex; flex-direction:column; gap:6px; justify-content:center;">
+                            <button class="btn-secondary" onclick="openStickerModal()">✨ פתח בנק סטיקרים מהיר</button>
+                            <input type="file" id="image_upload" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+                            <button class="btn-secondary" onclick="document.getElementById('image_upload').click()">📁 העלה קובץ מהמכשיר</button>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
+                            <span style="color:#8892b0;">גודל תצוגה של הסטיקר:</span>
+                            <span id="scale_val_lbl" style="color:var(--primary); font-weight:bold;">${Math.round(currentScale * 100)}%</span>
+                        </div>
+                        <input type="range" id="icon_scale_range" min="0.5" max="2.5" step="0.05" value="${currentScale}" style="width:100%; accent-color:var(--primary);" oninput="updateScale(this.value)">
+                    </div>
+
+                    <label style="font-size:0.8rem; color:#8892b0; margin-top:5px; display:block;">איך תקרא ליחידת המידה של המאכל?</label>
+                    <select id="new_unit_name">
+                        <option value="מנה">מנה</option>
+                        <option value="יחידה">יחידה</option>
+                        <option value="יחידה (בינונית)">יחידה (בינונית)</option>
+                        <option value="פרוסה">פרוסה</option>
+                        <option value="גביע">גביע</option>
+                        <option value="קופסה">קופסה</option>
+                        <option value="כף">כף</option>
+                        <option value="כפית">כפית</option>
+                        <option value="גרם">גרם</option>
+                    </select>
+
+                    <div style="margin-top:10px;">
+                        <label style="font-size:0.8rem; color:#8892b0;">כמה <b style="color:var(--primary);">גרם</b> שוקלת היחידה שבחרת?</label>
+                        <input type="number" id="new_unit_weight" value="100" placeholder="למשל: פרוסה = 35">
+                    </div>
+
+                    <div style="margin: 15px 0 5px 0; font-size:0.9rem;">
+                        <label style="display:flex; align-items:center; color:var(--primary); cursor:pointer;">
+                            <input type="checkbox" id="new_is_produce" style="transform:scale(1.3); margin-left:10px;">
+                            <span>זהו פרי או ירק (ללא חישוב צפיפות)</span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top:10px; border-top: 1px solid var(--border); padding-top: 10px;">
+                        <p style="font-size:0.85rem; color:var(--primary); margin:0 0 10px 0;">הזן ערכים קלוריים עבור 1 יחידה שלמה כפי שהגדרת למעלה:</p>
+                        <label style="font-size:0.8rem; color:#8892b0;">קלוריות (ליחידה שלמה)</label>
+                        <input type="number" id="new_cals" placeholder="0">
+
+                        <label style="font-size:0.8rem; color:#8892b0;">חלבון (ליחידה שלמה)</label>
+                        <input type="number" step="0.1" id="new_prot" placeholder="0">
+                    </div>
+
+                    <button class="btn-main" id="save_btn" onclick="saveNewFood()" style="margin-top:15px;">${isEdit ? 'שמור שינויים' : 'שמור למאגר'}</button>
+                </div>
+            `;
+            
+            updatePreviewIcon();
+        }
+
+        function updateScale(val) {
+            currentScale = parseFloat(val);
+            document.getElementById('scale_val_lbl').innerText = Math.round(currentScale * 100) + '%';
+            updatePreviewIcon();
+        }
+
+        function openStickerModal() {
+            let modalHtml = `
+                <div class="modal-overlay" id="sticker_modal" onclick="if(event.target === this) closeStickerModal()">
+                    <div class="modal-content">
+                        <h3 style="margin-top:0; color:var(--primary); text-align:center;">בנק סטיקרים מהיר</h3>
+                        <div class="modal-grid">
+                            ${foodStickerBank.map(s => `<div class="sticker-option" onclick="selectSticker('${s}')">${s}</div>`).join('')}
+                        </div>
+                        <button class="btn-secondary" style="margin-top:10px;" onclick="closeStickerModal()">סגור</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeStickerModal() {
+            let modal = document.getElementById('sticker_modal');
+            if (modal) modal.remove();
+        }
+
+        function selectSticker(sticker) {
+            currentCustomIcon = sticker;
+            updatePreviewIcon();
+            closeStickerModal();
+        }
+
+        function handlePaste(e) {
+            let items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                let item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    let blob = item.getAsFile();
+                    processImageBlob(blob);
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+
+        function handleImageUpload(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            processImageBlob(file);
+        }
+        
+        function processImageBlob(blob) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let img = new Image();
+                img.onload = function() {
+                    let canvas = document.createElement('canvas');
+                    let MAX_SIZE = 140; 
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    currentCustomIcon = canvas.toDataURL('image/webp', 0.9);
+                    updatePreviewIcon();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(blob);
+        }
+
+        function updatePreviewIcon() {
+            let previewBox = document.getElementById('icon_preview');
+            if(!previewBox) return;
+            
+            let s = currentScale || 1;
+            if(currentCustomIcon.startsWith('data:image')) {
+                previewBox.innerHTML = `<img src="${currentCustomIcon}" style="width:100%; height:100%; object-fit:contain; transform: scale(${s}); transition: transform 0.2s;">`;
+            } else {
+                let pFont = (2.2 * s) + 'rem';
+                previewBox.innerHTML = `<span style="font-size:${pFont}; transition: font-size 0.2s;">${currentCustomIcon || '🍽️'}</span>`;
+            }
+        }
+
+        function saveNewFood() {
+            let name = document.getElementById('new_name').value.trim();
+            let icon = currentCustomIcon || '🍽️';
+            let scale = currentScale || 1;
+            let cals = parseFloat(document.getElementById('new_cals').value) || 0;
+            let protein = parseFloat(document.getElementById('new_prot').value) || 0;
+            let unitName = document.getElementById('new_unit_name').value;
+            let unitWeight = parseFloat(document.getElementById('new_unit_weight').value) || 100;
+            let isProduce = document.getElementById('new_is_produce').checked;
+
+            if(!name) {
+                alert('נא להכניס שם מאכל');
+                return;
+            }
+
+            let foodDB = getFoodDB();
+            let newFood = { 
+                name: name, 
+                icon: icon, 
+                scale: scale,
+                cals: cals, 
+                protein: protein, 
+                unitName: unitName, 
+                unitWeight: unitWeight, 
+                isProduce: isProduce 
+            };
+
+            if (editIndex !== null) {
+                foodDB[editIndex] = newFood;
+                editIndex = null;
+            } else {
+                foodDB.push(newFood);
+            }
+            
+            localStorage.setItem('customFoodDB_v9', JSON.stringify(foodDB));
+            loadFoodListTab(document.querySelectorAll('.tab')[2]);
+        }
+
+        function updateNav(tabElement, title) {
+            if(tabElement) { 
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); 
+                tabElement.classList.add('active'); 
+            }
+            if(title) document.getElementById('main-title').innerText = title;
+        }
+
+        window.addEventListener('dragover', e => e.preventDefault());
+        window.addEventListener('drop', e => e.preventDefault());
+
+        window.onload = () => { loadLogTab(document.querySelectorAll('.tab')[0]); }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
